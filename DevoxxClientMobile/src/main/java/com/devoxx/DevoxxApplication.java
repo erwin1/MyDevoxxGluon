@@ -29,12 +29,13 @@ import com.airhacks.afterburner.injection.Injector;
 import com.devoxx.service.DevoxxService;
 import com.devoxx.service.Service;
 import com.devoxx.util.*;
-import com.devoxx.views.DevoxxSplash;
+import com.devoxx.views.SessionsPresenter;
 import com.devoxx.views.helper.ConnectivityUtils;
 import com.devoxx.views.helper.SessionVisuals;
 import com.gluonhq.charm.down.Platform;
 import com.gluonhq.charm.down.Services;
 import com.gluonhq.charm.down.plugins.ConnectivityService;
+import com.gluonhq.charm.down.plugins.DeviceService;
 import com.gluonhq.charm.down.plugins.DisplayService;
 import com.gluonhq.charm.down.plugins.SettingsService;
 import com.gluonhq.charm.glisten.afterburner.AppView;
@@ -54,8 +55,6 @@ import javafx.stage.Window;
 import java.util.Locale;
 
 import static com.devoxx.DevoxxView.SEARCH;
-import com.devoxx.views.SessionsPresenter;
-import com.gluonhq.charm.down.plugins.DeviceService;
 
 public class DevoxxApplication extends MobileApplication {
 
@@ -100,21 +99,11 @@ public class DevoxxApplication extends MobileApplication {
         }
 
         Services.get(SettingsService.class).ifPresent(settings -> {
-            String skip = settings.retrieve(DevoxxSettings.SKIP_VIDEO);
-            if (!Strings.isNullOrEmpty(skip)) {
-                skipVideo = Boolean.parseBoolean(skip);
-            }
             String sign = settings.retrieve(DevoxxSettings.SIGN_UP);
             if (!Strings.isNullOrEmpty(sign)) {
                 signUp = Boolean.parseBoolean(sign);
             }
         });
-        if (!skipVideo) {
-            Services.get(SettingsService.class).ifPresent(settings ->
-                    settings.store(DevoxxSettings.SKIP_VIDEO, Boolean.TRUE.toString())
-            );
-            addViewFactory(SPLASH_VIEW, DevoxxSplash::new);
-        }
         
         addLayerFactory(MENU_LAYER, () -> {
             SidePopupView sidePopupView = new SidePopupView(drawerPresenter.getDrawer());
