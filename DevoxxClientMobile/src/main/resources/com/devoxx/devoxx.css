@@ -28,36 +28,26 @@
 .root {
 
 
-    -otn-base: #d2660f;
+    -otn-base: #3B96AC;
 
-    -otn-lighter1: #EE8836;
-    -otn-lighter2: #FFA863;
+    -otn-lighter1: #80A9C3;
+    -otn-lighter2: #B5D0E2;
 
-    -otn-darker1: #AB4C01;
-    -otn-darker2: #833A00;
+    -otn-darker1: #366A8B;
+    -otn-darker2: #205476;
 
-    -alternate-color: #353C5C;
-
-    /*-otn-base: #5382A1;*/
-
-    /*-otn-lighter1: #80A9C3;*/
-    /*-otn-lighter2: #B5D0E2;*/
-
-    /*-otn-darker1: #366A8B;*/
-    /*-otn-darker2: #205476;*/
-
-    /*-alternate-color: #FDA633;*/
+    -alternate-color: #d2660f;
 
     /* http://knizia.biz/mcg/#/ */
-    -primary-swatch-100: #F1CFB4;
-    -primary-swatch-200: #E8B286;
-    -primary-swatch-300: #DF9356;
-    -primary-swatch-400: #D87C32;
+    -primary-swatch-100: #C2DEE5;
+    -primary-swatch-200: #9CCAD5;
+    -primary-swatch-300: #75B5C4;
+    -primary-swatch-400: #58A5B8;
     -primary-swatch-500: -otn-base;
-    -primary-swatch-600: #BF5C0D;
-    -primary-swatch-700: #AA520C;
-    -primary-swatch-800: #95480A;
-    -primary-swatch-900: #6D3507;
+    -primary-swatch-600: #35889C;
+    -primary-swatch-700: #2F798B;
+    -primary-swatch-800: #296A7A;
+    -primary-swatch-900: #1E4E5A;
 
     /* background color for primary and secondary FAB */
     -fab-primary-background-color: -alternate-color;
