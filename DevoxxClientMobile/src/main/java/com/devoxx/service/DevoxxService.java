@@ -104,6 +104,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -111,12 +112,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static java.util.UUID.*;
-
 public class DevoxxService implements Service {
 
     private static final Logger LOG = Logger.getLogger(DevoxxService.class.getName());
-    private static String _UUID;
 
 //    private static final String DEVOXX_CFP_DATA_URL = "https://s3-eu-west-1.amazonaws.com/cfpdevoxx/cfp.json";
 
@@ -139,14 +137,6 @@ public class DevoxxService implements Service {
                         System.out.println("[DBG] exception writing reload file "+ex);
                     }
                 });
-            });
-
-            Services.get(SettingsService.class).ifPresent(service -> {
-                _UUID = service.retrieve("uuid");
-                if (_UUID == null) {
-                    _UUID = randomUUID().toString();
-                    service.store("uuid", _UUID);
-                }
             });
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
@@ -700,7 +690,7 @@ public class DevoxxService implements Service {
             throw new IllegalStateException("An authenticated user that was verified at Devoxx CFP must be available when calling this method.");
         }
 
-        GluonObservableList<SessionId> functionSessions = DataProvider.retrieveList(localDataClient.createListDataReader(_UUID + "_favored",
+        GluonObservableList<SessionId> functionSessions = DataProvider.retrieveList(localDataClient.createListDataReader(getConference().getId() + "_favored",
                 SessionId.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
 
         functionSessions.initializedProperty().addListener((obs, ov, nv) -> {
@@ -727,7 +717,7 @@ public class DevoxxService implements Service {
             throw new IllegalStateException("An authenticated user that was verified at Devoxx CFP must be available when calling this method.");
         }
 
-        GluonObservableList<SessionId> functionSessions = DataProvider.retrieveList(localDataClient.createListDataReader(_UUID + "_scheduled",
+        GluonObservableList<SessionId> functionSessions = DataProvider.retrieveList(localDataClient.createListDataReader(getConference().getId() + "_scheduled",
                 SessionId.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
 
         functionSessions.initializedProperty().addListener((obs, ov, nv) -> {
@@ -765,7 +755,7 @@ public class DevoxxService implements Service {
             while (c.next()) {
                 if (c.wasRemoved()) {
                     for (Session session : c.getRemoved()) {
-                        originalList.removeIf(sessionId -> sessionId.getId().equalsIgnoreCase(session.getTalk().getId()));
+                        remove(originalList, session.getTalk().getId());
                     }
                 }
                 if (c.wasAdded()) {
@@ -779,6 +769,15 @@ public class DevoxxService implements Service {
         };
         sessions.addListener(listChangeListener);
         return listChangeListener;
+    }
+
+    private void remove(GluonObservableList<SessionId> originalList, String id) {
+        final Iterator<SessionId> iterator = originalList.iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next().getId().equalsIgnoreCase(id)) {
+                iterator.remove();
+            }
+        }
     }
 
     @Override
@@ -880,20 +879,20 @@ public class DevoxxService implements Service {
 
     private ObservableList<Note> internalRetrieveNotes() {
         if (DevoxxSettings.USE_REMOTE_NOTES) {
-            return DataProvider.retrieveList(cloudDataClient.createListDataReader(_UUID + "_notes",
+            return DataProvider.retrieveList(cloudDataClient.createListDataReader(getConference().getId() + "_notes",
                     Note.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
         } else {
-            return DataProvider.retrieveList(localDataClient.createListDataReader(_UUID + "_notes",
+            return DataProvider.retrieveList(localDataClient.createListDataReader(getConference().getId() + "_notes",
                     Note.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
         }
     }
 
     private ObservableList<Badge> internalRetrieveBadges() {
         if (DevoxxSettings.USE_REMOTE_NOTES) {
-            return DataProvider.retrieveList(cloudDataClient.createListDataReader(_UUID + "_badges",
+            return DataProvider.retrieveList(cloudDataClient.createListDataReader(getConference().getId() + "_badges",
                     Badge.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
         } else {
-            return DataProvider.retrieveList(localDataClient.createListDataReader(_UUID + "_badges",
+            return DataProvider.retrieveList(localDataClient.createListDataReader(getConference().getId() + "_badges",
                     Badge.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
         }
     }
