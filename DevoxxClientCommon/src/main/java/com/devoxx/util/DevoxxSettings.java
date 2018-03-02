@@ -57,7 +57,7 @@ public class DevoxxSettings {
      * only locally
      * Default: true
      */
-    public final static boolean USE_REMOTE_NOTES = true;
+    public final static boolean USE_REMOTE_NOTES = false;
 
     /**
      * boolean option to switch on/off voting

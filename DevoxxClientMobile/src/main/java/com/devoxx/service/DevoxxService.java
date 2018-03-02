@@ -29,14 +29,12 @@ import com.airhacks.afterburner.injection.Injector;
 import com.devoxx.model.Badge;
 import com.devoxx.model.Conference;
 import com.devoxx.model.Exhibitor;
-import com.devoxx.model.Favored;
 import com.devoxx.model.Favorite;
 import com.devoxx.model.Favorites;
 import com.devoxx.model.Floor;
 import com.devoxx.model.Note;
 import com.devoxx.model.ProposalType;
 import com.devoxx.model.ProposalTypes;
-import com.devoxx.model.Scheduled;
 import com.devoxx.model.Session;
 import com.devoxx.model.SessionId;
 import com.devoxx.model.Speaker;
@@ -113,9 +111,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.util.UUID.*;
+
 public class DevoxxService implements Service {
 
     private static final Logger LOG = Logger.getLogger(DevoxxService.class.getName());
+    private static String _UUID;
 
 //    private static final String DEVOXX_CFP_DATA_URL = "https://s3-eu-west-1.amazonaws.com/cfpdevoxx/cfp.json";
 
@@ -138,6 +139,14 @@ public class DevoxxService implements Service {
                         System.out.println("[DBG] exception writing reload file "+ex);
                     }
                 });
+            });
+
+            Services.get(SettingsService.class).ifPresent(service -> {
+                _UUID = service.retrieve("uuid");
+                if (_UUID == null) {
+                    _UUID = randomUUID().toString();
+                    service.store("uuid", _UUID);
+                }
             });
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
@@ -311,7 +320,9 @@ public class DevoxxService implements Service {
 
     @Override
     public boolean isAuthenticated() {
-        return authenticationClient.isAuthenticated() && cfpUserUuid.isNotEmpty().get();
+//        return authenticationClient.isAuthenticated() && cfpUserUuid.isNotEmpty().get();
+        // FixME: quick hack
+        return true;
     }
 
     @Override
@@ -689,19 +700,16 @@ public class DevoxxService implements Service {
             throw new IllegalStateException("An authenticated user that was verified at Devoxx CFP must be available when calling this method.");
         }
 
-        RemoteFunctionObject fnFavored = RemoteFunctionBuilder.create("favored")
-                .param("0", getConference().getCfpEndpoint())
-                .param("1", cfpUserUuid.get())
-                .object();
+        GluonObservableList<SessionId> functionSessions = DataProvider.retrieveList(localDataClient.createListDataReader(_UUID + "_favored",
+                SessionId.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
 
-        GluonObservableObject<Favored> functionSessions = fnFavored.call(Favored.class);
         functionSessions.initializedProperty().addListener((obs, ov, nv) -> {
             if (nv) {
-                for (SessionId sessionId : functionSessions.get().getFavored()) {
+                for (SessionId sessionId : functionSessions) {
                     findSession(sessionId.getId()).ifPresent(internalFavoredSessions::add);
                 }
 
-                internalFavoredSessionsListener = initializeSessionsListener(internalFavoredSessions, "favored");
+                internalFavoredSessionsListener = initializeSessionsListener(internalFavoredSessions, functionSessions);
                 ready.set(true);
             }
         });
@@ -719,19 +727,16 @@ public class DevoxxService implements Service {
             throw new IllegalStateException("An authenticated user that was verified at Devoxx CFP must be available when calling this method.");
         }
 
-        RemoteFunctionObject fnScheduled = RemoteFunctionBuilder.create("scheduled")
-                .param("0", getConference().getCfpEndpoint())
-                .param("1", cfpUserUuid.get())
-                .object();
+        GluonObservableList<SessionId> functionSessions = DataProvider.retrieveList(localDataClient.createListDataReader(_UUID + "_scheduled",
+                SessionId.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
 
-        GluonObservableObject<Scheduled> functionSessions = fnScheduled.call(Scheduled.class);
         functionSessions.initializedProperty().addListener((obs, ov, nv) -> {
             if (nv) {
-                for (SessionId sessionId : functionSessions.get().getScheduled()) {
+                for (SessionId sessionId : functionSessions) {
                     findSession(sessionId.getId()).ifPresent(internalScheduledSessions::add);
                 }
 
-                internalScheduledSessionsListener = initializeSessionsListener(internalScheduledSessions, "scheduled");
+                internalScheduledSessionsListener = initializeSessionsListener(internalScheduledSessions, functionSessions);
             }
         });
         functionSessions.stateProperty().addListener((obs, ov, nv) -> {
@@ -755,39 +760,19 @@ public class DevoxxService implements Service {
         return internalScheduledSessions;
     }
 
-    private ListChangeListener<Session> initializeSessionsListener(ObservableList<Session> sessions, String functionPrefix) {
+    private ListChangeListener<Session> initializeSessionsListener(ObservableList<Session> sessions, GluonObservableList<SessionId> originalList) {
         ListChangeListener<Session> listChangeListener = c -> {
             while (c.next()) {
                 if (c.wasRemoved()) {
                     for (Session session : c.getRemoved()) {
-                        LOG.log(Level.INFO, "Removing Session: " + session.getTalk().getId() + " / " + session.getTitle());
-                        RemoteFunctionObject fnRemove = RemoteFunctionBuilder.create(functionPrefix + "Remove")
-                                .param("0", getConference().getCfpEndpoint())
-                                .param("1", cfpUserUuid.get())
-                                .param("2", session.getTalk().getId())
-                                .object();
-                        GluonObservableObject<String> response = fnRemove.call(String.class);
-                        response.stateProperty().addListener((obs, ov, nv) -> {
-                            if (nv == ConnectState.FAILED) {
-                                LOG.log(Level.WARNING, "Failed to remove session " + session.getTalk().getId() + " from " + functionPrefix + ": " + response.getException().getMessage());
-                            }
-                        });
+                        originalList.removeIf(sessionId -> sessionId.getId().equalsIgnoreCase(session.getTalk().getId()));
                     }
                 }
                 if (c.wasAdded()) {
                     for (Session session : c.getAddedSubList()) {
-                        LOG.log(Level.INFO, "Adding Session: " + session.getTalk().getId() + " / " + session.getTitle());
-                        RemoteFunctionObject fnAdd = RemoteFunctionBuilder.create(functionPrefix + "Add")
-                                .param("0", getConference().getCfpEndpoint())
-                                .param("1", cfpUserUuid.get())
-                                .param("2", session.getTalk().getId())
-                                .object();
-                        GluonObservableObject<String> response = fnAdd.call(String.class);
-                        response.stateProperty().addListener((obs, ov, nv) -> {
-                            if (nv == ConnectState.FAILED) {
-                                LOG.log(Level.WARNING, "Failed to add session " + session.getTalk().getId() + " to " + functionPrefix + ": " + response.getException().getMessage());
-                            }
-                        });
+                        final SessionId sessionId = new SessionId();
+                        sessionId.setId(session.getTalk().getId());
+                        originalList.add(sessionId);
                     }
                 }
             }
@@ -862,7 +847,7 @@ public class DevoxxService implements Service {
 
     @Override
     public void refreshFavorites() {
-        if (getConference() != null && DevoxxSettings.conferenceHasFavoriteCount(getConference()) && 
+        if (getConference() != null && DevoxxSettings.conferenceHasFavoriteCount(getConference()) &&
                 (allFavorites.getState() == ConnectState.SUCCEEDED || allFavorites.getState() == ConnectState.FAILED)) {
             RemoteFunctionObject fnAllFavorites = RemoteFunctionBuilder.create("allFavorites")
                     .param("0", getConference().getCfpEndpoint())
@@ -895,20 +880,20 @@ public class DevoxxService implements Service {
 
     private ObservableList<Note> internalRetrieveNotes() {
         if (DevoxxSettings.USE_REMOTE_NOTES) {
-            return DataProvider.retrieveList(cloudDataClient.createListDataReader(authenticationClient.getAuthenticatedUser().getKey() + "_notes",
+            return DataProvider.retrieveList(cloudDataClient.createListDataReader(_UUID + "_notes",
                     Note.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
         } else {
-            return DataProvider.retrieveList(localDataClient.createListDataReader(authenticationClient.getAuthenticatedUser().getKey() + "_notes",
+            return DataProvider.retrieveList(localDataClient.createListDataReader(_UUID + "_notes",
                     Note.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
         }
     }
 
     private ObservableList<Badge> internalRetrieveBadges() {
         if (DevoxxSettings.USE_REMOTE_NOTES) {
-            return DataProvider.retrieveList(cloudDataClient.createListDataReader(authenticationClient.getAuthenticatedUser().getKey() + "_badges",
+            return DataProvider.retrieveList(cloudDataClient.createListDataReader(_UUID + "_badges",
                     Badge.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
         } else {
-            return DataProvider.retrieveList(localDataClient.createListDataReader(authenticationClient.getAuthenticatedUser().getKey() + "_badges",
+            return DataProvider.retrieveList(localDataClient.createListDataReader(_UUID + "_badges",
                     Badge.class, SyncFlag.LIST_WRITE_THROUGH, SyncFlag.OBJECT_WRITE_THROUGH));
         }
     }
