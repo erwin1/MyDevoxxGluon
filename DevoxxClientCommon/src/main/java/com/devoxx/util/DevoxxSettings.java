@@ -124,12 +124,12 @@ public class DevoxxSettings {
     /**
      * List of conferences contries that don't support favorite count
      */
-    private static final EnumSet<DevoxxCountry> CONFERENCE_COUNTRIES_WITHOUT_FAVORITE_COUNT = EnumSet.of(DevoxxCountry.MA);
+    private static final EnumSet<DevoxxCountry> CONFERENCE_COUNTRIES_WITHOUT_FAVORITE_COUNT = EnumSet.of(DevoxxCountry.MA, DevoxxCountry.ZU);
 
     /**
      * List of conferences contries that don't support voting
      */
-    private static final EnumSet<DevoxxCountry> CONFERENCE_COUNTRIES_WITHOUT_VOTING = EnumSet.of(DevoxxCountry.MA);
+    private static final EnumSet<DevoxxCountry> CONFERENCE_COUNTRIES_WITHOUT_VOTING = EnumSet.of(DevoxxCountry.MA, DevoxxCountry.ZU);
 
     /**
      * List of conferences contries that don't support favorite and schedule

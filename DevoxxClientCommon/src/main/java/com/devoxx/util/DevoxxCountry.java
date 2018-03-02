@@ -34,7 +34,8 @@ public enum DevoxxCountry {
     PL("Poland"),
     BE("Belgium"),
     MA("Morocco"),
-    US("United States");
+    US("United States"),
+    ZU("Zürich");
 
     private final String country;
 
