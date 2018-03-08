@@ -5,7 +5,7 @@
         <key>CFBundleIdentifier</key>
         <string>com.voxxed.gluon</string>
         <key>CFBundleVersion</key>
-        <!-- buildnumber --><string>9</string>
+        <!-- buildnumber --><string>10</string>
         <key>CFBundleShortVersionString</key>
         <string>1.0.0</string>
         <key>CFBundleExecutable</key>
@@ -106,7 +106,7 @@
     <array>
     <dict>
         <key>UILaunchImageMinimumOSVersion</key>
-        <string>10.0</string>
+        <string>8.0</string>
         <key>UILaunchImageName</key>
         <string>Default-375w-667h</string>
         <key>UILaunchImageOrientation</key>
@@ -116,7 +116,7 @@
     </dict>
     <dict>
         <key>UILaunchImageMinimumOSVersion</key>
-        <string>10.0</string>
+        <string>8.0</string>
         <key>UILaunchImageName</key>
         <string>Default-414w-736h</string>
         <key>UILaunchImageOrientation</key>
@@ -126,7 +126,7 @@
     </dict>
     <dict>
         <key>UILaunchImageMinimumOSVersion</key>
-        <string>10.0</string>
+        <string>8.0</string>
         <key>UILaunchImageName</key>
         <string>Default-portrait</string>
         <key>UILaunchImageOrientation</key>
@@ -136,7 +136,7 @@
     </dict>
     <dict>
         <key>UILaunchImageMinimumOSVersion</key>
-        <string>10.0</string>
+        <string>8.0</string>
         <key>UILaunchImageName</key>
         <string>Default-ipad105</string>
         <key>UILaunchImageOrientation</key>
@@ -146,7 +146,7 @@
     </dict>
     <dict>
         <key>UILaunchImageMinimumOSVersion</key>
-        <string>10.0</string>
+        <string>8.0</string>
         <key>UILaunchImageName</key>
         <string>Default-ipad129</string>
         <key>UILaunchImageOrientation</key>
@@ -156,7 +156,7 @@
     </dict>
     <dict>
         <key>UILaunchImageMinimumOSVersion</key>
-        <string>10.0</string>
+        <string>8.0</string>
         <key>UILaunchImageName</key>
         <string>Default-568h</string>
         <key>UILaunchImageOrientation</key>
@@ -166,7 +166,7 @@
     </dict>
     <dict>
         <key>UILaunchImageMinimumOSVersion</key>
-        <string>10.0</string>
+        <string>8.0</string>
         <key>UILaunchImageName</key>
         <string>Default</string>
         <key>UILaunchImageOrientation</key>
